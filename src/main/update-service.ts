@@ -74,17 +74,25 @@ export class UpdateService {
       })
     })
 
-    autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
+    autoUpdater.on('update-downloaded', async (info: UpdateInfo) => {
       this.setState({
         phase: 'downloaded',
         availableVersion: info.version,
         progress: 100,
-        message: `MiniERP ${info.version} está listo para instalarse.`
+        message: `MiniERP ${info.version} se está instalando...`
       })
       this.notify(
         'Actualización lista',
-        `MiniERP ${info.version} se instalará al reiniciar la aplicación.`
+        `MiniERP ${info.version} se instalará y reiniciará automáticamente.`
       )
+      try {
+        await this.beforeInstall()
+      } catch {
+        // Ignorar errores de cierre previo
+      }
+      setTimeout(() => {
+        autoUpdater.quitAndInstall(true, true)
+      }, 500)
     })
 
     autoUpdater.on('update-not-available', () => {
@@ -150,7 +158,7 @@ export class UpdateService {
   async install(): Promise<void> {
     if (this.state.phase !== 'downloaded') return
     await this.beforeInstall()
-    autoUpdater.quitAndInstall(false, true)
+    autoUpdater.quitAndInstall(true, true)
   }
 
   dispose(): void {

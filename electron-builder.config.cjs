@@ -45,14 +45,15 @@ module.exports = {
     ]
   },
   nsis: {
-    oneClick: false,
+    oneClick: true,
     perMachine: false,
     allowElevation: true,
-    allowToChangeInstallationDirectory: true,
+    allowToChangeInstallationDirectory: false,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
     shortcutName: 'MiniERP',
-    deleteAppDataOnUninstall: false
+    deleteAppDataOnUninstall: false,
+    runAfterFinish: true
   },
   ...(publish ? { publish } : {})
 }
