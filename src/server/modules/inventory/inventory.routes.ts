@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import type { PlanConfig } from '../../../shared/types/plan'
+import type { ConfigService } from '../../config/config-service'
 import { requireModule } from '../../middleware/require-module'
+import { requireFeature } from '../../middleware/require-feature'
 import type { InventoryService } from './inventory.service'
 import {
   parseProductCreate,
@@ -10,7 +12,8 @@ import {
 
 export function createInventoryRouter(
   inventory: InventoryService,
-  getPlan: () => PlanConfig
+  getPlan: () => PlanConfig,
+  config?: ConfigService
 ): Router {
   const router = Router()
 
@@ -27,7 +30,7 @@ export function createInventoryRouter(
     response.json(inventory.listProducts({ search, lowStockOnly }))
   })
 
-  router.post('/products', (request, response) => {
+  router.post('/products', config ? requireFeature(config, 'inventory', 'createProduct') : (_req, _res, next) => next(), (request, response) => {
     const product = inventory.createProduct(parseProductCreate(request.body))
     response.status(201).json(product)
   })
@@ -36,7 +39,7 @@ export function createInventoryRouter(
     response.json(inventory.getProduct(request.params.id))
   })
 
-  router.put('/products/:id', (request, response) => {
+  router.put('/products/:id', config ? requireFeature(config, 'inventory', 'editProduct') : (_req, _res, next) => next(), (request, response) => {
     const product = inventory.updateProduct(
       request.params.id,
       parseProductUpdate(request.body)
@@ -44,7 +47,7 @@ export function createInventoryRouter(
     response.json(product)
   })
 
-  router.delete('/products/:id', (request, response) => {
+  router.delete('/products/:id', config ? requireFeature(config, 'inventory', 'archiveProduct') : (_req, _res, next) => next(), (request, response) => {
     inventory.archiveProduct(request.params.id)
     response.json({ ok: true })
   })
@@ -58,7 +61,7 @@ export function createInventoryRouter(
     response.json(inventory.listMovements({ productId, limit }))
   })
 
-  router.post('/movements', (request, response) => {
+  router.post('/movements', config ? requireFeature(config, 'inventory', 'stockMovement') : (_req, _res, next) => next(), (request, response) => {
     const movement = inventory.registerMovement(parseStockMovement(request.body))
     response.status(201).json(movement)
   })

@@ -46,8 +46,8 @@ export function createApiApp({
   app.use('/api/business', createBusinessRouter(config))
   app.use('/api/plan', createPlanRouter(config))
   app.use('/api/system', createSystemRouter(config, appVersion, databaseFile))
-  app.use('/api/inventory', createInventoryRouter(inventory, () => config.getPlan()))
-  app.use('/api/finance', createFinanceRouter(finance, () => config.getPlan()))
+  app.use('/api/inventory', createInventoryRouter(inventory, () => config.getPlan(), config))
+  app.use('/api/finance', createFinanceRouter(finance, () => config.getPlan(), config))
 
   app.use((_request, response) => {
     response.status(404).json({

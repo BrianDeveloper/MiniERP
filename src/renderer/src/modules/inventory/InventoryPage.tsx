@@ -29,6 +29,7 @@ import { MovementHistory } from './MovementHistory'
 import { MovementModal } from './MovementModal'
 import { ProductFormModal } from './ProductFormModal'
 import { ProductTable } from './ProductTable'
+import { useEntitlements } from '../../hooks/useEntitlements'
 
 type TabId = 'products' | 'movements'
 
@@ -69,6 +70,7 @@ export function InventoryPage() {
 
 function InventoryWorkspace({ module }: { module: AppModule }) {
   const { business, plan } = useAppData()
+  const { entitlements } = useEntitlements()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 250)
   const [lowStockOnly, setLowStockOnly] = useState(false)
@@ -200,7 +202,8 @@ function InventoryWorkspace({ module }: { module: AppModule }) {
             type="button"
             className="ghost-button"
             onClick={() => void openMovement(null)}
-            disabled={summary !== null && summary.productCount === 0}
+            disabled={(summary !== null && summary.productCount === 0) || !entitlements.features.inventory.stockMovement}
+            title={!entitlements.features.inventory.stockMovement ? 'Deshabilitado por permisos' : undefined}
           >
             <ArrowLeftRight size={15} />
             Movimiento
@@ -209,6 +212,8 @@ function InventoryWorkspace({ module }: { module: AppModule }) {
             type="button"
             className="primary-button"
             onClick={() => setEditor({ product: null })}
+            disabled={!entitlements.features.inventory.createProduct}
+            title={!entitlements.features.inventory.createProduct ? 'Deshabilitado por permisos' : undefined}
           >
             <Plus size={15} />
             Nuevo producto
@@ -374,9 +379,9 @@ function InventoryWorkspace({ module }: { module: AppModule }) {
               products={products}
               locale={locale}
               currency={business.currency}
-              onEdit={(product) => setEditor({ product })}
-              onMovement={(product) => void openMovement(product)}
-              onArchive={(product) => setArchiveTarget(product)}
+              onEdit={entitlements.features.inventory.editProduct ? (product) => setEditor({ product }) : undefined}
+              onMovement={entitlements.features.inventory.stockMovement ? (product) => void openMovement(product) : undefined}
+              onArchive={entitlements.features.inventory.archiveProduct ? (product) => setArchiveTarget(product) : undefined}
             />
           ) : productsError ? null : (
             <section className="inv-empty">

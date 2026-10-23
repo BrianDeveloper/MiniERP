@@ -9,8 +9,21 @@ export const IPC_CHANNELS = {
   pinVerify: 'security:pin-verify',
   pinChange: 'security:pin-change',
   pinDisable: 'security:pin-disable',
-  factoryReset: 'system:factory-reset'
+  factoryReset: 'system:factory-reset',
+  entitlementsGet: 'entitlements:get',
+  entitlementsUpdate: 'entitlements:update',
+  backupCreate: 'backup:create',
+  backupList: 'backup:list',
+  backupRestore: 'backup:restore',
+  backupReveal: 'backup:reveal'
 } as const
+
+export interface BackupInfo {
+  path: string
+  name: string
+  sizeBytes: number
+  createdAt: string
+}
 
 export interface ApiConnection {
   baseUrl: string
@@ -47,4 +60,10 @@ export interface MinierpBridge {
   pinChange(oldPin: string, newPin: string): Promise<{ ok: boolean; error?: string }>
   pinDisable(currentPin: string): Promise<{ ok: boolean; error?: string }>
   factoryReset(confirm: string): Promise<{ ok: boolean; error?: string }>
+  getEntitlements(): Promise<import('./types/entitlements').Entitlements>
+  updateEntitlements(input: import('./types/entitlements').Entitlements): Promise<{ ok: boolean; error?: string }>
+  createBackup(): Promise<{ ok: boolean; error?: string; backup?: BackupInfo }>
+  listBackups(): Promise<{ ok: boolean; error?: string; backups?: BackupInfo[] }>
+  restoreBackup(path: string): Promise<{ ok: boolean; error?: string }>
+  revealBackups(): Promise<{ ok: boolean; error?: string }>
 }

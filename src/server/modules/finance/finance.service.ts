@@ -27,7 +27,7 @@ export class FinanceService {
   }
 
   listMovements(filters: FinanceMovementFilters = {}): FinancialMovement[] {
-    const range = resolvePeriod(filters.period ?? 'all')
+    const range = resolveRange(filters)
     return this.repository.listMovements({
       ...range,
       type: filters.type,
@@ -35,8 +35,8 @@ export class FinanceService {
     })
   }
 
-  getSummary(period: FinancePeriod = 'all'): FinanceSummary {
-    return this.repository.getSummary(resolvePeriod(period))
+  getSummary(filters: FinanceMovementFilters = {}): FinanceSummary {
+    return this.repository.getSummary(resolveRange(filters))
   }
 
   createMovement(input: FinancialMovementInput): FinancialMovement {
@@ -122,6 +122,21 @@ export class FinanceService {
     }
     return movement
   }
+}
+
+function resolveRange(filters: FinanceMovementFilters): { from?: string; to?: string } {
+  if (filters.from || filters.to) {
+    if (filters.from && filters.to && filters.from > filters.to) {
+      throw new AppError(
+        'La fecha "Desde" no puede ser posterior a "Hasta".',
+        400,
+        'validation_error',
+        { from: 'La fecha "Desde" no puede ser posterior a "Hasta".' }
+      )
+    }
+    return { from: filters.from, to: filters.to }
+  }
+  return resolvePeriod(filters.period ?? 'all')
 }
 
 function resolvePeriod(period: FinancePeriod): { from?: string; to?: string } {

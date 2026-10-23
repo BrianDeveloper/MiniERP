@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { join, resolve } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
 import { ConfigService } from '../server/config/config-service'
 import { startApiServer, type RunningApi } from '../server'
 import { IPC_CHANNELS, type ApiConnection, type UpdateState } from '../shared/ipc'
@@ -8,6 +8,12 @@ import { UpdateService } from './update-service'
 import { createMainWindow } from './window'
 import { PinStore } from './security/pin-store'
 import { performFactoryReset } from './security/factory-reset'
+import {
+  createBackup,
+  getBackupsDir,
+  listBackups,
+  restoreBackup
+} from './security/backup-service'
 
 app.setName('MiniERP')
 if (process.platform === 'win32') {
@@ -147,6 +153,101 @@ if (!hasSingleInstanceLock) {
               api = null
             }
           })
+          const newToken = randomBytes(32).toString('hex')
+          api = await startApiServer({
+            config,
+            token: newToken,
+            appVersion: app.getVersion(),
+            dataDir: currentDataDir
+          })
+          connection = {
+            baseUrl: `http://127.0.0.1:${api.port}`,
+            token: newToken
+          }
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+
+      ipcMain.handle(IPC_CHANNELS.entitlementsGet, () => config.getEntitlements())
+      ipcMain.handle(IPC_CHANNELS.entitlementsUpdate, async (_event, input) => {
+        try {
+          await config.updateEntitlements(input)
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+
+      ipcMain.handle(IPC_CHANNELS.backupCreate, async () => {
+        try {
+          const backup = await createBackup(currentDataDir)
+          return { ok: true, backup }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.backupList, async () => {
+        try {
+          const backups = await listBackups(currentDataDir)
+          return { ok: true, backups }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.backupReveal, async () => {
+        try {
+          const dir = getBackupsDir(currentDataDir)
+          await shell.openPath(dir)
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.backupRestore, async (_event, path: string) => {
+        try {
+          const openOptions = {
+            title: 'Seleccionar respaldo de MiniERP',
+            properties: ['openFile' as const],
+            filters: [{ name: 'Base de datos', extensions: ['db'] }]
+          }
+          const chosen =
+            typeof path === 'string' && path.trim()
+              ? path.trim()
+              : mainWindow
+                ? (await dialog.showOpenDialog(mainWindow, openOptions)).filePaths[0]
+                : (await dialog.showOpenDialog(openOptions)).filePaths[0]
+
+          if (!chosen) return { ok: false, error: 'Operación cancelada' }
+
+          const messageOptions = {
+            type: 'warning' as const,
+            buttons: ['Restaurar', 'Cancelar'],
+            defaultId: 1,
+            cancelId: 1,
+            title: 'Restaurar respaldo',
+            message: 'Se reemplazará la base de datos actual.',
+            detail:
+              'Se creará una copia de seguridad de la base actual antes de restaurar. La aplicación recargará los datos.'
+          }
+          const confirmation = mainWindow
+            ? await dialog.showMessageBox(mainWindow, messageOptions)
+            : await dialog.showMessageBox(messageOptions)
+          if (confirmation.response !== 0) {
+            return { ok: false, error: 'Operación cancelada' }
+          }
+
+          await restoreBackup(currentDataDir, chosen, async () => {
+            await api?.close()
+            api = null
+          })
+
           const newToken = randomBytes(32).toString('hex')
           api = await startApiServer({
             config,

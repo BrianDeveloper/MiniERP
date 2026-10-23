@@ -33,7 +33,8 @@ export function parseFinancialMovement(body: unknown): FinancialMovementInput {
   const amountCents = readInteger(raw, 'amountCents', 'El monto', errors, MAX_CENTS, 1)
   const concept = readText(raw, 'concept', 'El concepto', errors, {
     required: true,
-    max: 160
+    min: 5,
+    max: 150
   })
   const category = readText(raw, 'category', 'La categoría', errors, { max: 60 })
 
@@ -83,6 +84,27 @@ export function parsePeriodFilter(value: unknown): FinancePeriod {
   return typeof value === 'string' && FINANCE_PERIODS.includes(value as FinancePeriod)
     ? (value as FinancePeriod)
     : 'all'
+}
+
+export function parseDateRange(query: unknown): { from?: string; to?: string } {
+  const raw = asRecord(query)
+  const errors: Record<string, string> = {}
+
+  const fromRaw = typeof raw.from === 'string' ? raw.from.trim() : ''
+  const toRaw = typeof raw.to === 'string' ? raw.to.trim() : ''
+
+  const from = fromRaw
+    ? readIsoDate({ from: fromRaw }, 'from', 'La fecha desde', errors)
+    : undefined
+  const to = toRaw ? readIsoDate({ to: toRaw }, 'to', 'La fecha hasta', errors) : undefined
+
+  if (from && to && from > to) {
+    errors.from = 'La fecha "Desde" no puede ser posterior a "Hasta".'
+  }
+
+  throwIfInvalid(errors)
+
+  return { from, to }
 }
 
 export function parseTypeFilter(value: unknown): FinancialMovementType | undefined {

@@ -13,7 +13,7 @@ export function readText(
   field: string,
   label: string,
   errors: Record<string, string>,
-  options: { required?: boolean; max: number }
+  options: { required?: boolean; max: number; min?: number }
 ): string | undefined {
   const value = raw[field]
 
@@ -30,6 +30,11 @@ export function readText(
   const text = value.trim()
   if (options.required && text.length === 0) {
     errors[field] = `${label} es obligatorio.`
+    return undefined
+  }
+
+  if (options.min !== undefined && text.length > 0 && text.length < options.min) {
+    errors[field] = `${label} debe tener al menos ${options.min} caracteres.`
     return undefined
   }
 

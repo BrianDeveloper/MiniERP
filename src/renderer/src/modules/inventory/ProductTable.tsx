@@ -1,14 +1,15 @@
 import { AlertTriangle, Archive, ArrowLeftRight, Check, Pencil } from 'lucide-react'
 import type { Product } from '../../../../shared/types/inventory'
+import type { CurrencyCode } from '../../../../shared/types/business'
 import { formatMoney } from '../../lib/format'
 
 interface ProductTableProps {
   products: Product[]
   locale: string
-  currency: string
-  onEdit: (product: Product) => void
-  onMovement: (product: Product) => void
-  onArchive: (product: Product) => void
+  currency: CurrencyCode
+  onEdit?: (product: Product) => void
+  onMovement?: (product: Product) => void
+  onArchive?: (product: Product) => void
 }
 
 export function ProductTable({
@@ -68,33 +69,39 @@ export function ProductTable({
               </td>
               <td>
                 <div className="inv-row-actions">
-                  <button
-                    type="button"
-                    className="icon-button"
-                    title="Editar producto"
-                    aria-label={`Editar ${product.name}`}
-                    onClick={() => onEdit(product)}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    title="Registrar movimiento"
-                    aria-label={`Registrar movimiento de ${product.name}`}
-                    onClick={() => onMovement(product)}
-                  >
-                    <ArrowLeftRight size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button is-danger"
-                    title="Archivar producto"
-                    aria-label={`Archivar ${product.name}`}
-                    onClick={() => onArchive(product)}
-                  >
-                    <Archive size={15} />
-                  </button>
+                  {onEdit ? (
+                    <button
+                      type="button"
+                      className="icon-button"
+                      title="Editar producto"
+                      aria-label={`Editar ${product.name}`}
+                      onClick={() => onEdit(product)}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  ) : null}
+                  {onMovement ? (
+                    <button
+                      type="button"
+                      className="icon-button"
+                      title="Registrar movimiento"
+                      aria-label={`Registrar movimiento de ${product.name}`}
+                      onClick={() => onMovement(product)}
+                    >
+                      <ArrowLeftRight size={15} />
+                    </button>
+                  ) : null}
+                  {onArchive ? (
+                    <button
+                      type="button"
+                      className="icon-button is-danger"
+                      title="Archivar producto"
+                      aria-label={`Archivar ${product.name}`}
+                      onClick={() => onArchive(product)}
+                    >
+                      <Archive size={15} />
+                    </button>
+                  ) : null}
                 </div>
               </td>
             </tr>

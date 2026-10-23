@@ -31,6 +31,10 @@ import { useUpdater } from './useUpdater'
 import { businessFormSchema } from '../../../shared/validation/schemas'
 import { formatPhoneInput, formatRifInput, MAX_PHONE_LENGTH, MAX_RIF_LENGTH } from '../../../shared/validation/rules'
 import { PinLockModal } from '../components/PinLockModal'
+import { EntitlementsPanel } from './settings/EntitlementsPanel'
+import { BackupPanel } from './settings/BackupPanel'
+import { useEntitlements } from '../hooks/useEntitlements'
+
 
 interface FormState {
   name: string
@@ -60,6 +64,7 @@ function formatLimit(value: number | null, locale: string): string {
 export function SettingsPage() {
   const { business, plan, system, saveBusiness } = useAppData()
   const { state: updateState, check: checkUpdates, install: installUpdate } = useUpdater()
+  const { entitlements } = useEntitlements()
   const [form, setForm] = useState<FormState>(() => toForm(business))
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [message, setMessage] = useState('')
@@ -370,6 +375,13 @@ export function SettingsPage() {
               </ul>
             </div>
           </section>
+
+          <EntitlementsPanel unlocked={pinUnlocked} />
+
+          <BackupPanel
+            unlocked={pinUnlocked}
+            enabled={entitlements.features.settings.backupRestore}
+          />
 
           <section className="panel storage-panel">
             <h3>

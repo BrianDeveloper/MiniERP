@@ -10,19 +10,12 @@ import type {
 import { request } from './client'
 
 export const financeApi = {
-  getSummary(period: FinancePeriod = 'all') {
-    const params = new URLSearchParams({ period })
-    return request<FinanceSummary>(`/api/finance/summary?${params.toString()}`)
+  getSummary(filters: FinanceMovementFilters = {}) {
+    return request<FinanceSummary>(`/api/finance/summary?${buildQuery(filters)}`)
   },
 
   listMovements(filters: FinanceMovementFilters = {}) {
-    const params = new URLSearchParams()
-    if (filters.period) params.set('period', filters.period)
-    if (filters.type) params.set('type', filters.type)
-    const search = filters.search?.trim()
-    if (search) params.set('search', search)
-    const query = params.toString()
-
+    const query = buildQuery(filters)
     return request<FinancialMovement[]>(`/api/finance/movements${query ? `?${query}` : ''}`)
   },
 
@@ -45,4 +38,15 @@ export const financeApi = {
       body: JSON.stringify(input)
     })
   }
+}
+
+function buildQuery(filters: FinanceMovementFilters): string {
+  const params = new URLSearchParams()
+  if (filters.period) params.set('period', filters.period)
+  if (filters.from) params.set('from', filters.from)
+  if (filters.to) params.set('to', filters.to)
+  if (filters.type) params.set('type', filters.type)
+  const search = filters.search?.trim()
+  if (search) params.set('search', search)
+  return params.toString()
 }

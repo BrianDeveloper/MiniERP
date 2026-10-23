@@ -33,7 +33,18 @@ const bridge: MinierpBridge = {
   pinDisable: (currentPin: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.pinDisable, currentPin) as Promise<{ ok: boolean; error?: string }>,
   factoryReset: (confirm: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.factoryReset, confirm) as Promise<{ ok: boolean; error?: string }>
+    ipcRenderer.invoke(IPC_CHANNELS.factoryReset, confirm) as Promise<{ ok: boolean; error?: string }>,
+  getEntitlements: () => ipcRenderer.invoke(IPC_CHANNELS.entitlementsGet) as Promise<import('../shared/types/entitlements').Entitlements>,
+  updateEntitlements: (input: import('../shared/types/entitlements').Entitlements) =>
+    ipcRenderer.invoke(IPC_CHANNELS.entitlementsUpdate, input) as Promise<{ ok: boolean; error?: string }>,
+  createBackup: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.backupCreate) as Promise<{ ok: boolean; error?: string; backup?: import('../shared/ipc').BackupInfo }>,
+  listBackups: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.backupList) as Promise<{ ok: boolean; error?: string; backups?: import('../shared/ipc').BackupInfo[] }>,
+  restoreBackup: (path: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.backupRestore, path) as Promise<{ ok: boolean; error?: string }>,
+  revealBackups: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.backupReveal) as Promise<{ ok: boolean; error?: string }>
 }
 
 contextBridge.exposeInMainWorld('minierp', bridge)

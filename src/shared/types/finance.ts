@@ -34,6 +34,8 @@ export interface FinancialMovementInput {
 
 export interface FinanceMovementFilters {
   period?: FinancePeriod
+  from?: string
+  to?: string
   type?: FinancialMovementType
   search?: string
 }

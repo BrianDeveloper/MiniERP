@@ -20,7 +20,7 @@ export function parseProductCreate(body: unknown): ProductCreateInput {
   const errors: Record<string, string> = {}
 
   const sku = readText(raw, 'sku', 'El SKU', errors, { required: true, max: 40 })
-  const name = readText(raw, 'name', 'El nombre', errors, { required: true, max: 120 })
+  const name = readText(raw, 'name', 'El nombre', errors, { required: true, min: 3, max: 100 })
   const category = readText(raw, 'category', 'La categoría', errors, { max: 60 })
   const costPriceCents = readInteger(raw, 'costPriceCents', 'El costo', errors, MAX_CENTS)
   const salePriceCents = readInteger(raw, 'salePriceCents', 'El precio de venta', errors, MAX_CENTS)
@@ -48,7 +48,7 @@ export function parseProductUpdate(body: unknown): ProductUpdateInput {
   const errors: Record<string, string> = {}
 
   const sku = readText(raw, 'sku', 'El SKU', errors, { required: true, max: 40 })
-  const name = readText(raw, 'name', 'El nombre', errors, { required: true, max: 120 })
+  const name = readText(raw, 'name', 'El nombre', errors, { required: true, min: 3, max: 100 })
   const category = readText(raw, 'category', 'La categoría', errors, { max: 60 })
   const costPriceCents = readInteger(raw, 'costPriceCents', 'El costo', errors, MAX_CENTS)
   const salePriceCents = readInteger(raw, 'salePriceCents', 'El precio de venta', errors, MAX_CENTS)

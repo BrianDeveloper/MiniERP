@@ -27,6 +27,7 @@ import { formatDate, formatMoney, formatNumber } from '../../lib/format'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { canOpenModule, getModule, type AppModule } from '../registry'
 import { FinanceMovementModal } from './FinanceMovementModal'
+import { useEntitlements } from '../../hooks/useEntitlements'
 
 type TypeFilter = 'all' | FinancialMovementType
 
@@ -74,10 +75,23 @@ export function FinancePage() {
 
 function FinanceWorkspace({ module }: { module: AppModule }) {
   const { business } = useAppData()
+  const { entitlements } = useEntitlements()
   const [period, setPeriod] = useState<FinancePeriod>('month')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [search, setSearch] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const debouncedSearch = useDebouncedValue(search, 250)
+
+  const customRangeEnabled = entitlements.features.finance.dateRangeCustom
+  const usingCustomRange = customRangeEnabled && (fromDate !== '' || toDate !== '')
+  const rangeError =
+    usingCustomRange && fromDate !== '' && toDate !== '' && fromDate > toDate
+      ? 'La fecha "Desde" no puede ser posterior a "Hasta".'
+      : null
+  const rangeFilters = usingCustomRange
+    ? { from: fromDate || undefined, to: toDate || undefined }
+    : { period }
 
   const [summary, setSummary] = useState<FinanceSummary | null>(null)
   const [movements, setMovements] = useState<FinancialMovement[]>([])
@@ -95,10 +109,17 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
   useEffect(() => {
     let cancelled = false
     setLoadingSummary(true)
-    setSummaryError(null)
+    setSummaryError(rangeError)
+
+    if (rangeError) {
+      setLoadingSummary(false)
+      return () => {
+        cancelled = true
+      }
+    }
 
     financeApi
-      .getSummary(period)
+      .getSummary(rangeFilters)
       .then((data) => {
         if (!cancelled) setSummary(data)
       })
@@ -112,16 +133,23 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
     return () => {
       cancelled = true
     }
-  }, [period, refreshToken])
+  }, [period, fromDate, toDate, usingCustomRange, refreshToken])
 
   useEffect(() => {
     let cancelled = false
     setLoadingMovements(true)
-    setMovementsError(null)
+    setMovementsError(rangeError)
+
+    if (rangeError) {
+      setLoadingMovements(false)
+      return () => {
+        cancelled = true
+      }
+    }
 
     financeApi
       .listMovements({
-        period,
+        ...rangeFilters,
         type: typeFilter === 'all' ? undefined : typeFilter,
         search: debouncedSearch
       })
@@ -138,7 +166,7 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
     return () => {
       cancelled = true
     }
-  }, [period, typeFilter, debouncedSearch, refreshToken])
+  }, [period, fromDate, toDate, usingCustomRange, typeFilter, debouncedSearch, refreshToken])
 
   useEffect(() => {
     if (!notice) return
@@ -188,7 +216,13 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
       icon={module.icon}
       accent={module.accent}
       actions={
-        <button type="button" className="primary-button" onClick={() => setEditorOpen(true)}>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => setEditorOpen(true)}
+          disabled={!entitlements.features.finance.createManual}
+          title={!entitlements.features.finance.createManual ? 'Deshabilitado por permisos' : undefined}
+        >
           <Plus size={15} />
           Nuevo movimiento
         </button>
@@ -216,21 +250,72 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
         <div className="fin-period-bar">
           <div className="fin-periods" role="group" aria-label="Periodo financiero">
             {PERIOD_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={period === option.id ? 'is-active' : undefined}
-                aria-pressed={period === option.id}
-                onClick={() => setPeriod(option.id)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+            <button
+              key={option.id}
+              type="button"
+              className={period === option.id && !usingCustomRange ? 'is-active' : undefined}
+              aria-pressed={period === option.id && !usingCustomRange}
+              onClick={() => {
+                setFromDate('')
+                setToDate('')
+                setPeriod(option.id)
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
           <span className="fin-period-note">
-            {loadingSummary ? 'Actualizando resumen...' : `Mostrando: ${periodLabel}`}
+            {loadingSummary
+              ? 'Actualizando resumen...'
+              : usingCustomRange
+                ? 'Mostrando: rango personalizado'
+                : `Mostrando: ${periodLabel}`}
           </span>
         </div>
+
+        {customRangeEnabled ? (
+          <div
+            className="fin-range-bar"
+            style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}
+          >
+            <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span>Desde</span>
+              <input
+                type="date"
+                value={fromDate}
+                max={toDate || undefined}
+                onChange={(event) => setFromDate(event.target.value)}
+                aria-invalid={Boolean(rangeError)}
+              />
+            </label>
+            <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span>Hasta</span>
+              <input
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(event) => setToDate(event.target.value)}
+                aria-invalid={Boolean(rangeError)}
+              />
+            </label>
+            {fromDate || toDate ? (
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => {
+                  setFromDate('')
+                  setToDate('')
+                }}
+              >
+                Limpiar rango
+              </button>
+            ) : (
+              <span className="fin-period-note">Opcional: filtra un rango de fechas personalizado.</span>
+            )}
+            {rangeError ? <span className="field-error">{rangeError}</span> : null}
+          </div>
+        ) : null}
 
         <section className="fin-summary-grid" aria-label="Resumen financiero">
           <article className="fin-stat is-balance">
@@ -412,7 +497,7 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
                       {formatMoney(movement.amountCents, business.locale, business.currency)}
                     </td>
                     <td>
-                      {movement.source === 'manual' ? (
+                      {movement.source === 'manual' && entitlements.features.finance.deleteManual ? (
                         <div className="inv-row-actions">
                           <button
                             type="button"
@@ -425,7 +510,7 @@ function FinanceWorkspace({ module }: { module: AppModule }) {
                           </button>
                         </div>
                       ) : (
-                        <span className="fin-locked" title="Los ingresos por venta no se eliminan aquí">
+                        <span className="fin-locked" title={movement.source === 'manual' && !entitlements.features.finance.deleteManual ? 'Eliminación deshabilitada por permisos' : 'Los ingresos por venta no se eliminan aquí'}>
                           —
                         </span>
                       )}
