@@ -115,12 +115,24 @@ if (!hasSingleInstanceLock) {
           return { ok: false }
         }
       })
-      ipcMain.handle(IPC_CHANNELS.pinRemove, () => {
+      ipcMain.handle(IPC_CHANNELS.pinChange, (_event, oldPin: string, newPin: string) => {
         try {
-          pinStore?.removePin()
+          if (!pinStore) throw new Error('pin_store_no_disponible')
+          pinStore.changePin(oldPin, newPin)
           return { ok: true }
-        } catch {
-          return { ok: false }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.pinDisable, (_event, currentPin: string) => {
+        try {
+          if (!pinStore) throw new Error('pin_store_no_disponible')
+          pinStore.disablePin(currentPin)
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
         }
       })
       ipcMain.handle(IPC_CHANNELS.factoryReset, async (_event, confirm: string) => {

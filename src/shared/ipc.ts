@@ -7,7 +7,8 @@ export const IPC_CHANNELS = {
   pinHas: 'security:pin-has',
   pinSet: 'security:pin-set',
   pinVerify: 'security:pin-verify',
-  pinRemove: 'security:pin-remove',
+  pinChange: 'security:pin-change',
+  pinDisable: 'security:pin-disable',
   factoryReset: 'system:factory-reset'
 } as const
 
@@ -43,6 +44,7 @@ export interface MinierpBridge {
   pinHas(): Promise<boolean>
   pinSet(pin: string): Promise<{ ok: boolean; error?: string }>
   pinVerify(pin: string): Promise<{ ok: boolean }>
-  pinRemove(): Promise<{ ok: boolean }>
+  pinChange(oldPin: string, newPin: string): Promise<{ ok: boolean; error?: string }>
+  pinDisable(currentPin: string): Promise<{ ok: boolean; error?: string }>
   factoryReset(confirm: string): Promise<{ ok: boolean; error?: string }>
 }

@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
 
 interface PinLockModalProps {
-  mode: 'verify' | 'setup'
-  onSuccess: () => void
+  mode: 'verify' | 'setup' | 'change' | 'disable'
+  onSuccess: (pin?: string) => void
   onCancel?: () => void
 }
 
 export function PinLockModal({ mode, onSuccess, onCancel }: PinLockModalProps) {
   const [pin, setPin] = useState('')
+  const [oldPin, setOldPin] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setPin('')
+    setOldPin('')
     setConfirm('')
     setError('')
   }, [mode])
@@ -44,9 +46,46 @@ export function PinLockModal({ mode, onSuccess, onCancel }: PinLockModalProps) {
         return
       }
 
+      if (mode === 'change') {
+        if (oldPin.trim().length < 4 || pin.trim().length < 4) {
+          setError('Completa todos los campos.')
+          setLoading(false)
+          return
+        }
+        if (pin !== confirm) {
+          setError('Los PINs nuevos no coinciden.')
+          setLoading(false)
+          return
+        }
+        const res = await window.minierp?.pinChange?.(oldPin, pin)
+        if (!res?.ok) {
+          setError(res?.error || 'PIN actual incorrecto o no se pudo cambiar.')
+          setLoading(false)
+          return
+        }
+        onSuccess()
+        return
+      }
+
+      if (mode === 'disable') {
+        if (oldPin.trim().length < 4) {
+          setError('Ingresa el PIN actual.')
+          setLoading(false)
+          return
+        }
+        const res = await window.minierp?.pinDisable?.(oldPin)
+        if (!res?.ok) {
+          setError(res?.error || 'PIN actual incorrecto.')
+          setLoading(false)
+          return
+        }
+        onSuccess(oldPin)
+        return
+      }
+
       const res = await window.minierp?.pinVerify?.(pin)
       if (res?.ok) {
-        onSuccess()
+        onSuccess(pin)
         return
       }
       setError('PIN incorrecto.')
@@ -57,13 +96,22 @@ export function PinLockModal({ mode, onSuccess, onCancel }: PinLockModalProps) {
     }
   }
 
+  const title =
+    mode === 'setup'
+      ? 'Configurar PIN'
+      : mode === 'change'
+        ? 'Cambiar PIN'
+        : mode === 'disable'
+          ? 'Desactivar PIN'
+          : 'Ingresar PIN'
+
   return (
     <div className="modal-backdrop">
       <div className="modal-card" role="dialog" aria-modal="true">
         <header className="modal-header">
           <div>
             <p className="modal-kicker">Seguridad</p>
-            <h2 className="modal-title">{mode === 'setup' ? 'Configurar PIN de acceso' : 'Ingresar PIN'}</h2>
+            <h2 className="modal-title">{title}</h2>
           </div>
           {onCancel ? (
             <button type="button" className="modal-close" onClick={onCancel}>
@@ -72,30 +120,65 @@ export function PinLockModal({ mode, onSuccess, onCancel }: PinLockModalProps) {
           ) : null}
         </header>
         <form className="modal-form" onSubmit={handleSubmit}>
-          <label className="modal-field">
-            <span>{mode === 'setup' ? 'PIN / Contraseña' : 'PIN'}</span>
-            <input
-              type="password"
-              inputMode="numeric"
-              autoComplete="off"
-              value={pin}
-              onChange={(event) => setPin(event.target.value)}
-              minLength={4}
-              required
-              autoFocus
-            />
-          </label>
-          {mode === 'setup' ? (
+          {mode === 'change' || mode === 'disable' ? (
             <label className="modal-field">
-              <span>Confirmar PIN / Contraseña</span>
+              <span>PIN actual</span>
               <input
                 type="password"
                 inputMode="numeric"
                 autoComplete="off"
-                value={confirm}
-                onChange={(event) => setConfirm(event.target.value)}
+                value={oldPin}
+                onChange={(event) => setOldPin(event.target.value)}
                 minLength={4}
                 required
+                autoFocus
+              />
+            </label>
+          ) : null}
+          {mode === 'disable' ? (
+            <p className="settings-row__subtitle">Al desactivarlo, el panel de Configuración quedará sin protección.</p>
+          ) : null}
+          {mode === 'setup' || mode === 'change' ? (
+            <>
+              <label className="modal-field">
+                <span>{mode === 'change' ? 'Nuevo PIN / Contraseña' : 'PIN / Contraseña'}</span>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={pin}
+                  onChange={(event) => setPin(event.target.value)}
+                  minLength={4}
+                  required
+                  autoFocus={mode === 'setup'}
+                />
+              </label>
+              <label className="modal-field">
+                <span>Confirmar {mode === 'change' ? 'nuevo PIN' : 'PIN'}</span>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={confirm}
+                  onChange={(event) => setConfirm(event.target.value)}
+                  minLength={4}
+                  required
+                />
+              </label>
+            </>
+          ) : null}
+          {mode === 'verify' ? (
+            <label className="modal-field">
+              <span>PIN</span>
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                value={pin}
+                onChange={(event) => setPin(event.target.value)}
+                minLength={4}
+                required
+                autoFocus
               />
             </label>
           ) : null}
@@ -107,7 +190,15 @@ export function PinLockModal({ mode, onSuccess, onCancel }: PinLockModalProps) {
               </button>
             ) : null}
             <button type="submit" className="primary-button" disabled={loading}>
-              {loading ? 'Verificando...' : mode === 'setup' ? 'Guardar PIN' : 'Desbloquear'}
+              {loading
+                ? 'Procesando...'
+                : mode === 'disable'
+                  ? 'Desactivar'
+                  : mode === 'change'
+                    ? 'Guardar nuevo PIN'
+                    : mode === 'setup'
+                      ? 'Guardar PIN'
+                      : 'Desbloquear'}
             </button>
           </footer>
         </form>

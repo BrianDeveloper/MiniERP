@@ -28,7 +28,10 @@ const bridge: MinierpBridge = {
     ipcRenderer.invoke(IPC_CHANNELS.pinSet, pin) as Promise<{ ok: boolean; error?: string }>,
   pinVerify: (pin: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.pinVerify, pin) as Promise<{ ok: boolean }>,
-  pinRemove: () => ipcRenderer.invoke(IPC_CHANNELS.pinRemove) as Promise<{ ok: boolean }>,
+  pinChange: (oldPin: string, newPin: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.pinChange, oldPin, newPin) as Promise<{ ok: boolean; error?: string }>,
+  pinDisable: (currentPin: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.pinDisable, currentPin) as Promise<{ ok: boolean; error?: string }>,
   factoryReset: (confirm: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.factoryReset, confirm) as Promise<{ ok: boolean; error?: string }>
 }

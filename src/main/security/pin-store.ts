@@ -17,11 +17,12 @@ export class PinStore {
   }
 
   setPin(pin: string): void {
-    const plain = Buffer.from(pin.trim(), 'utf8')
+    const value = pin.trim()
+    if (value.length < 4) throw new Error('pin_invalido')
     if (!safeStorage.isEncryptionAvailable()) {
       throw new Error('safeStorage_no_disponible')
     }
-    const encrypted = safeStorage.encryptString(plain.toString('utf8'))
+    const encrypted = safeStorage.encryptString(value)
     writeFileSync(this.filePath, encrypted)
   }
 
@@ -39,7 +40,17 @@ export class PinStore {
     }
   }
 
-  removePin(): void {
+  changePin(oldPin: string, newPin: string): void {
+    if (!this.verifyPin(oldPin)) throw new Error('pin_actual_incorrecto')
+    this.setPin(newPin)
+  }
+
+  disablePin(currentPin: string): void {
+    if (!this.verifyPin(currentPin)) throw new Error('pin_actual_incorrecto')
+    this.removePin()
+  }
+
+  private removePin(): void {
     if (existsSync(this.filePath)) {
       unlinkSync(this.filePath)
     }

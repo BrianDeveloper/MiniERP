@@ -65,7 +65,7 @@ export function SettingsPage() {
   const [message, setMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [pinHas, setPinHas] = useState(false)
-  const [pinMode, setPinMode] = useState<'setup' | 'verify' | null>(null)
+  const [pinMode, setPinMode] = useState<'setup' | 'verify' | 'change' | 'disable' | null>(null)
   const [pinUnlocked, setPinUnlocked] = useState(false)
   const [showFactoryReset, setShowFactoryReset] = useState(false)
   const [resetConfirm, setResetConfirm] = useState('')
@@ -78,8 +78,10 @@ export function SettingsPage() {
   useEffect(() => {
     void window.minierp?.pinHas?.().then((has) => {
       setPinHas(has)
-      if (!has) setPinMode('setup')
-      else {
+      if (!has) {
+        setPinMode('setup')
+        setPinUnlocked(false)
+      } else {
         setPinMode('verify')
         setPinUnlocked(false)
       }
