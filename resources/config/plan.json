@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "plan": "local",
+  "issuedTo": null,
+  "issuedAt": null,
+  "modules": {
+    "inventory": {
+      "enabled": true
+    },
+    "finance": {
+      "enabled": true
+    }
+  },
+  "limits": {
+    "users": 3,
+    "inventoryItems": null,
+    "monthlyTransactions": null
+  },
+  "features": {
+    "advancedReports": false,
+    "multiUser": false,
+    "cloudBackup": false,
+    "automaticUpdates": true,
+    "dataExport": true
+  }
+}

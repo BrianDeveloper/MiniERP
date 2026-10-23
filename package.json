@@ -1,0 +1,43 @@
+{
+  "name": "minierp",
+  "version": "0.1.0",
+  "productName": "MiniERP",
+  "description": "Mini ERP local-first para pequeños comerciantes",
+  "main": "./out/main/index.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "pnpm typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "package": "pnpm build && electron-builder --config electron-builder.config.cjs --dir",
+    "dist": "pnpm build && electron-builder --config electron-builder.config.cjs --win nsis --publish never",
+    "release": "node scripts/check-release-env.mjs && pnpm build && electron-builder --config electron-builder.config.cjs --win nsis --publish always",
+    "backup": "node scripts/backup-db.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "electron-updater": "^6.8.9",
+    "express": "^5.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.5"
+  }
+}
