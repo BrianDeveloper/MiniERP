@@ -1,6 +1,6 @@
 {
   "name": "minierp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "productName": "MiniERP",
   "description": "Mini ERP local-first para pequeños comerciantes",
   "main": "./out/main/index.js",
