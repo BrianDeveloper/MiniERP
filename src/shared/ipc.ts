@@ -3,7 +3,12 @@ export const IPC_CHANNELS = {
   updateState: 'updates:get-state',
   updateCheck: 'updates:check',
   updateInstall: 'updates:install',
-  updateStateChanged: 'updates:state-changed'
+  updateStateChanged: 'updates:state-changed',
+  pinHas: 'security:pin-has',
+  pinSet: 'security:pin-set',
+  pinVerify: 'security:pin-verify',
+  pinRemove: 'security:pin-remove',
+  factoryReset: 'system:factory-reset'
 } as const
 
 export interface ApiConnection {
@@ -35,4 +40,9 @@ export interface MinierpBridge {
   checkForUpdates(): Promise<UpdateState>
   installUpdate(): Promise<void>
   onUpdateState(listener: (state: UpdateState) => void): () => void
+  pinHas(): Promise<boolean>
+  pinSet(pin: string): Promise<{ ok: boolean; error?: string }>
+  pinVerify(pin: string): Promise<{ ok: boolean }>
+  pinRemove(): Promise<{ ok: boolean }>
+  factoryReset(confirm: string): Promise<{ ok: boolean; error?: string }>
 }

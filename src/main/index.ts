@@ -6,6 +6,8 @@ import { startApiServer, type RunningApi } from '../server'
 import { IPC_CHANNELS, type ApiConnection, type UpdateState } from '../shared/ipc'
 import { UpdateService } from './update-service'
 import { createMainWindow } from './window'
+import { PinStore } from './security/pin-store'
+import { performFactoryReset } from './security/factory-reset'
 
 app.setName('MiniERP')
 if (process.platform === 'win32') {
@@ -21,6 +23,8 @@ if (!hasSingleInstanceLock) {
   let api: RunningApi | null = null
   let connection: ApiConnection | null = null
   let updates: UpdateService | null = null
+  let pinStore: PinStore | null = null
+  let currentDataDir = ''
 
   const publishUpdateState = (state: UpdateState): void => {
     for (const window of BrowserWindow.getAllWindows()) {
@@ -41,6 +45,8 @@ if (!hasSingleInstanceLock) {
       const dataDir = process.env.MINIERP_DATA_DIR
         ? resolve(process.env.MINIERP_DATA_DIR)
         : app.getPath('userData')
+      currentDataDir = dataDir
+      pinStore = new PinStore(dataDir)
       const defaultsDir = app.isPackaged
         ? join(process.resourcesPath, 'config')
         : join(app.getAppPath(), 'resources', 'config')
@@ -49,23 +55,12 @@ if (!hasSingleInstanceLock) {
       await config.init()
 
       const token = randomBytes(32).toString('hex')
-      try {
-        api = await startApiServer({
-          config,
-          token,
-          appVersion: app.getVersion(),
-          dataDir
-        })
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error)
-        if (detail.includes('integrity_check_failed')) {
-          dialog.showErrorBox(
-            'Base de datos corrupta',
-            'No se pudo verificar la integridad de la base de datos. Usa el script de backup/restauración (scripts/backup-db.mjs) o restaura una copia de seguridad desde %AppData%/Roaming/MiniERP.'
-          )
-        }
-        throw error
-      }
+      api = await startApiServer({
+        config,
+        token,
+        appVersion: app.getVersion(),
+        dataDir
+      })
 
       connection = {
         baseUrl: `http://127.0.0.1:${api.port}`,
@@ -96,6 +91,66 @@ if (!hasSingleInstanceLock) {
       ipcMain.handle(IPC_CHANNELS.updateInstall, async () => {
         if (!updates) throw new Error('El servicio de actualizaciones no está disponible.')
         await updates.install()
+      })
+
+      ipcMain.handle(IPC_CHANNELS.pinHas, () => pinStore?.hasPin() ?? false)
+      ipcMain.handle(IPC_CHANNELS.pinSet, (_event, pin: string) => {
+        try {
+          if (!pinStore) throw new Error('pin_store_no_disponible')
+          const value = String(pin ?? '').trim()
+          if (value.length < 4) return { ok: false, error: 'PIN inválido' }
+          pinStore.setPin(value)
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.pinVerify, (_event, pin: string) => {
+        try {
+          if (!pinStore) return { ok: false }
+          const value = String(pin ?? '').trim()
+          return { ok: pinStore.verifyPin(value) }
+        } catch {
+          return { ok: false }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.pinRemove, () => {
+        try {
+          pinStore?.removePin()
+          return { ok: true }
+        } catch {
+          return { ok: false }
+        }
+      })
+      ipcMain.handle(IPC_CHANNELS.factoryReset, async (_event, confirm: string) => {
+        try {
+          if (String(confirm ?? '').trim() !== 'BORRAR') {
+            return { ok: false, error: 'Confirmación incorrecta' }
+          }
+          await performFactoryReset({
+            dataDir: currentDataDir,
+            onBeforeReset: async () => {
+              await api?.close()
+              api = null
+            }
+          })
+          const newToken = randomBytes(32).toString('hex')
+          api = await startApiServer({
+            config,
+            token: newToken,
+            appVersion: app.getVersion(),
+            dataDir: currentDataDir
+          })
+          connection = {
+            baseUrl: `http://127.0.0.1:${api.port}`,
+            token: newToken
+          }
+          return { ok: true }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error)
+          return { ok: false, error: detail }
+        }
       })
 
       mainWindow = createMainWindow()

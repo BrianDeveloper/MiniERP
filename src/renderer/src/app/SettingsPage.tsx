@@ -30,6 +30,7 @@ import { useAppData } from './AppDataProvider'
 import { useUpdater } from './useUpdater'
 import { businessFormSchema } from '../../../shared/validation/schemas'
 import { formatPhoneInput, formatRifInput, MAX_PHONE_LENGTH, MAX_RIF_LENGTH } from '../../../shared/validation/rules'
+import { PinLockModal } from '../components/PinLockModal'
 
 interface FormState {
   name: string
@@ -63,10 +64,30 @@ export function SettingsPage() {
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [message, setMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [pinHas, setPinHas] = useState(false)
+  const [pinMode, setPinMode] = useState<'setup' | 'verify' | null>(null)
+  const [pinUnlocked, setPinUnlocked] = useState(false)
+  const [showFactoryReset, setShowFactoryReset] = useState(false)
+  const [resetConfirm, setResetConfirm] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   useEffect(() => {
     setForm(toForm(business))
   }, [business])
+
+  useEffect(() => {
+    void window.minierp?.pinHas?.().then((has) => {
+      setPinHas(has)
+      if (!has) setPinMode('setup')
+      else {
+        setPinMode('verify')
+        setPinUnlocked(false)
+      }
+    }).catch(() => {
+      setPinHas(false)
+      setPinMode('setup')
+    })
+  }, [])
 
   const isDirty = useMemo(
     () =>
@@ -412,6 +433,10 @@ export function SettingsPage() {
           </section>
         </aside>
       </div>
+      {pinHas && !pinUnlocked && pinMode ? (
+        <PinLockModal mode={pinMode} onSuccess={() => setPinUnlocked(true)} />
+      ) : null}
     </WorkspaceShell>
   )
 }
+

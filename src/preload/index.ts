@@ -22,7 +22,15 @@ const bridge: MinierpBridge = {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.updateStateChanged, handler)
     }
-  }
+  },
+  pinHas: () => ipcRenderer.invoke(IPC_CHANNELS.pinHas) as Promise<boolean>,
+  pinSet: (pin: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.pinSet, pin) as Promise<{ ok: boolean; error?: string }>,
+  pinVerify: (pin: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.pinVerify, pin) as Promise<{ ok: boolean }>,
+  pinRemove: () => ipcRenderer.invoke(IPC_CHANNELS.pinRemove) as Promise<{ ok: boolean }>,
+  factoryReset: (confirm: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.factoryReset, confirm) as Promise<{ ok: boolean; error?: string }>
 }
 
 contextBridge.exposeInMainWorld('minierp', bridge)
