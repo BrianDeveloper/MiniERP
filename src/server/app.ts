@@ -66,7 +66,24 @@ export function createApiApp({
       return
     }
 
-    console.error('[minierp] API error:', error)
+    const err = error as Error & { code?: string }
+    if (err.code === 'SQLITE_BUSY') {
+      response.status(503).json({
+        error: 'database_busy',
+        message: 'La base de datos está ocupada. Intenta de nuevo en unos segundos.'
+      })
+      return
+    }
+
+    if (err.code === 'SQLITE_READONLY' || err.code === 'SQLITE_CANTOPEN') {
+      response.status(500).json({
+        error: 'database_unavailable',
+        message: 'No se puede acceder a la base de datos local. Verifica permisos o espacio en disco.'
+      })
+      return
+    }
+
+    console.error('[minierp] API error:', err.message)
     response.status(500).json({
       error: 'internal_error',
       message: 'Ocurrió un error interno.'

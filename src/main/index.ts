@@ -49,12 +49,23 @@ if (!hasSingleInstanceLock) {
       await config.init()
 
       const token = randomBytes(32).toString('hex')
-      api = await startApiServer({
-        config,
-        token,
-        appVersion: app.getVersion(),
-        dataDir
-      })
+      try {
+        api = await startApiServer({
+          config,
+          token,
+          appVersion: app.getVersion(),
+          dataDir
+        })
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error)
+        if (detail.includes('integrity_check_failed')) {
+          dialog.showErrorBox(
+            'Base de datos corrupta',
+            'No se pudo verificar la integridad de la base de datos. Usa el script de backup/restauración (scripts/backup-db.mjs) o restaura una copia de seguridad desde %AppData%/Roaming/MiniERP.'
+          )
+        }
+        throw error
+      }
 
       connection = {
         baseUrl: `http://127.0.0.1:${api.port}`,

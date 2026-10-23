@@ -17,6 +17,7 @@ export interface BusinessProfile {
   locale: string
   address: string
   phone: string
+  exchangeRate?: number | null
   updatedAt: string | null
 }
 
@@ -26,6 +27,7 @@ export interface BusinessUpdateInput {
   currency: CurrencyCode
   address: string
   phone: string
+  exchangeRate?: number | null
 }
 
 export const DEFAULT_CURRENCY: CurrencyCode = 'VES'
@@ -38,6 +40,7 @@ export const DEFAULT_BUSINESS: BusinessProfile = {
   locale: getCurrency(DEFAULT_CURRENCY).locale,
   address: '',
   phone: '',
+  exchangeRate: null,
   updatedAt: null
 }
 
@@ -70,6 +73,7 @@ export function normalizeBusiness(value: unknown): BusinessProfile {
     locale: currencyMeta.locale,
     address: asText(raw.address),
     phone: asText(raw.phone),
+    exchangeRate: typeof raw.exchangeRate === 'number' && Number.isFinite(raw.exchangeRate) ? raw.exchangeRate : null,
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : null
   }
 }
