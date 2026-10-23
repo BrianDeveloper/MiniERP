@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package version
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          if ($env:GITHUB_REF_NAME -ne "v$version") {
+            throw "La etiqueta $env:GITHUB_REF_NAME no coincide con la versión $version de package.json."
+          }
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build and publish release
+        env:
+          GH_OWNER: BrianDeveloper
+          GH_REPO: MiniERP
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm release
