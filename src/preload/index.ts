@@ -47,7 +47,9 @@ const bridge: MinierpBridge = {
     ipcRenderer.invoke(IPC_CHANNELS.backupReveal) as Promise<{ ok: boolean; error?: string }>,
   getExchangeRate: () => ipcRenderer.invoke(IPC_CHANNELS.exchangeRateGet) as Promise<import('../shared/types/exchange-rate').ExchangeRateState>,
   fetchExchangeRateAuto: () => ipcRenderer.invoke(IPC_CHANNELS.exchangeRateFetchAuto) as Promise<import('../shared/types/exchange-rate').ExchangeRateState>,
-  updateExchangeRateManual: (rate: number) => ipcRenderer.invoke(IPC_CHANNELS.exchangeRateUpdateManual, rate) as Promise<import('../shared/types/exchange-rate').ExchangeRateState>
+  updateExchangeRateManual: (rate: number) => ipcRenderer.invoke(IPC_CHANNELS.exchangeRateUpdateManual, rate) as Promise<import('../shared/types/exchange-rate').ExchangeRateState>,
+  licenseImport: () => ipcRenderer.invoke(IPC_CHANNELS.licenseImport) as Promise<import('../shared/types/license').LicenseState>,
+  licenseGet: () => ipcRenderer.invoke(IPC_CHANNELS.licenseGet) as Promise<import('../shared/types/license').LicenseState>
 }
 
 contextBridge.exposeInMainWorld('minierp', bridge)

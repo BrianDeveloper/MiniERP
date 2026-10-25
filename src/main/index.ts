@@ -67,9 +67,14 @@ if (!hasSingleInstanceLock) {
       const exchangeRateService = new ExchangeRateService(db)
       void exchangeRateService.initialize()
 
+      const { LicenseService } = await import('./services/license.service')
+      const licenseService = new LicenseService(db)
+
       ipcMain.handle(IPC_CHANNELS.exchangeRateGet, () => exchangeRateService.getState())
       ipcMain.handle(IPC_CHANNELS.exchangeRateFetchAuto, () => exchangeRateService.fetchAuto())
       ipcMain.handle(IPC_CHANNELS.exchangeRateUpdateManual, (_event, rate: number) => exchangeRateService.updateManual(Number(rate)))
+      ipcMain.handle(IPC_CHANNELS.licenseImport, () => licenseService.import())
+      ipcMain.handle(IPC_CHANNELS.licenseGet, () => licenseService.getState())
 
       const token = randomBytes(32).toString('hex')
       api = await startApiServer({

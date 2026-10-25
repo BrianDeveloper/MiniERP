@@ -11,7 +11,7 @@
     "dev": "electron-vite dev",
     "build": "pnpm typecheck && electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
     "package": "pnpm build && electron-builder --config electron-builder.config.cjs --dir",
     "dist": "pnpm build && electron-builder --config electron-builder.config.cjs --win nsis --publish never",
     "release": "node scripts/check-release-env.mjs && pnpm build && electron-builder --config electron-builder.config.cjs --win nsis --publish always",
@@ -39,7 +39,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
-    "typescript": "^5.9.3",
+    "typescript": "5.9.3",
     "vite": "^8.3.5"
   }
 }

@@ -18,7 +18,9 @@ export const IPC_CHANNELS = {
   backupReveal: 'backup:reveal',
   exchangeRateGet: 'exchange-rate:get',
   exchangeRateFetchAuto: 'exchange-rate:fetch-auto',
-  exchangeRateUpdateManual: 'exchange-rate:update-manual'
+  exchangeRateUpdateManual: 'exchange-rate:update-manual',
+  licenseImport: 'license:import',
+  licenseGet: 'license:get'
 } as const
 
 export interface BackupInfo {
@@ -72,4 +74,6 @@ export interface MinierpBridge {
   getExchangeRate(): Promise<import('./types/exchange-rate').ExchangeRateState>
   fetchExchangeRateAuto(): Promise<import('./types/exchange-rate').ExchangeRateState>
   updateExchangeRateManual(rate: number): Promise<import('./types/exchange-rate').ExchangeRateState>
+  licenseImport(): Promise<import('./types/license').LicenseState>
+  licenseGet(): Promise<import('./types/license').LicenseState>
 }
