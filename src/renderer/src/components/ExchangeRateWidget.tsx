@@ -73,7 +73,6 @@ export function ExchangeRateWidget() {
         {open && (
           <ManualRateModal
             value={manualValue}
-            source={source}
             onChange={setManualValue}
             onSave={handleSaveManual}
             onClose={() => setOpen(false)}
@@ -88,7 +87,9 @@ export function ExchangeRateWidget() {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs shadow-[0_10px_60px_-30px_rgba(56,189,248,0.6)]">
       <span className="relative flex h-2 w-2">
-        <span className={`absolute inline-flex h-full w-full rounded-full opacity-60 ${isBcvToday ? 'bg-emerald-400' : 'bg-amber-400'} ${updating ? 'animate-ping' : ''}`} />
+        <span
+          className={`absolute inline-flex h-full w-full rounded-full opacity-60 ${isBcvToday ? 'bg-emerald-400' : 'bg-amber-400'} ${updating ? 'animate-ping' : ''}`}
+        />
         <span className={`relative inline-flex h-2 w-2 rounded-full ${isBcvToday ? 'bg-emerald-400' : 'bg-amber-400'}`} />
       </span>
       <span className="whitespace-nowrap text-white/90">
@@ -121,7 +122,6 @@ export function ExchangeRateWidget() {
       {open && (
         <ManualRateModal
           value={manualValue}
-          source={source}
           onChange={setManualValue}
           onSave={handleSaveManual}
           onClose={() => setOpen(false)}
@@ -142,7 +142,6 @@ function ManualRateModal({
   error
 }: {
   value: string
-  source: string
   onChange: (v: string) => void
   onSave: () => void
   onClose: () => void
@@ -152,29 +151,31 @@ function ManualRateModal({
   const [mode, setMode] = useState<'bcv' | 'manual'>('manual')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-6 shadow-[0_40px_120px_-60px_rgba(56,189,248,0.9)]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-[#15172a]/95 to-[#0f1026]/95 shadow-[0_60px_160px_-80px_rgba(56,189,248,0.9)] p-6">
         <button
-          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-white/40 transition hover:bg-white/5 hover:text-white"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition hover:bg-white/5 hover:text-white"
           onClick={onClose}
           aria-label="Cerrar"
         >
           <X size={16} />
         </button>
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-white">Editar tasa de cambio</h3>
-          <p className="mt-1 text-xs text-white/50">Define el valor de 1 USD en bolívares venezolanos</p>
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold text-white">Editar tasa de cambio</h3>
+          <p className="mt-1 text-sm text-white/50">Define el valor de 1 USD en bolívares venezolanos.</p>
         </div>
         <div className="mb-4">
-          <label className="mb-1 block text-xs text-white/60">Fuente</label>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-white/60">
+            Fuente
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setMode('bcv')}
-              className={`rounded-lg px-2 py-1 text-xs transition ${
+              className={`rounded-xl px-3 py-2 text-sm transition ${
                 mode === 'bcv'
-                  ? 'bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-400/40'
-                  : 'bg-white/5 text-white/60 hover:text-white'
+                  ? 'bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/40'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
               }`}
             >
               BCV
@@ -182,40 +183,42 @@ function ManualRateModal({
             <button
               type="button"
               onClick={() => setMode('manual')}
-              className={`rounded-lg px-2 py-1 text-xs transition ${
+              className={`rounded-xl px-3 py-2 text-sm transition ${
                 mode === 'manual'
-                  ? 'bg-amber-400/20 text-amber-200 ring-1 ring-amber-400/40'
-                  : 'bg-white/5 text-white/60 hover:text-white'
+                  ? 'bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/40'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
               }`}
             >
               Manual
             </button>
           </div>
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-white/60">Tasa (VES por 1 USD)</label>
+        <div className="mb-2">
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-white/60">
+            Tasa (VES por 1 USD)
+          </label>
           <div className="relative">
             <input
               value={value}
               onChange={(e) => onChange(e.target.value)}
               inputMode="decimal"
-              placeholder="45.20"
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-white/40"
+              placeholder="Ej. 45.20"
+              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 pr-12 text-base text-white outline-none transition focus:border-white/40"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/30">VES</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/40">VES</span>
           </div>
-          {error ? <p className="mt-2 text-xs text-amber-400">{error}</p> : null}
+          {error ? <p className="mt-2 text-sm text-amber-400">{error}</p> : null}
         </div>
-        <div className="mt-6 flex gap-2">
+        <div className="mt-6 grid grid-cols-2 gap-3">
           <button
-            className="flex-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 transition hover:bg-white/5"
+            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/5"
             onClick={onClose}
             disabled={saving}
           >
             Cancelar
           </button>
           <button
-            className="flex-1 rounded-lg bg-gradient-to-r from-sky-400/80 to-cyan-400/80 px-3 py-2 text-sm font-medium text-white shadow-[0_20px_60px_-30px_rgba(56,189,248,0.9)] transition hover:from-sky-400 hover:to-cyan-400 disabled:opacity-60"
+            className="rounded-xl bg-gradient-to-r from-sky-400/80 to-cyan-400/80 px-4 py-2.5 text-sm font-medium text-white shadow-[0_30px_80px_-40px_rgba(56,189,248,0.9)] transition hover:from-sky-400 hover:to-cyan-400 disabled:opacity-60"
             onClick={onSave}
             disabled={saving}
           >

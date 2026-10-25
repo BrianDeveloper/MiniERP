@@ -34,6 +34,7 @@ import { PinLockModal } from '../components/PinLockModal'
 import { EntitlementsPanel } from './settings/EntitlementsPanel'
 import { BackupPanel } from './settings/BackupPanel'
 import { useEntitlements } from '../hooks/useEntitlements'
+import { LicenseSystemPanel } from '../components/LicenseSystemPanel'
 
 
 interface FormState {
@@ -321,28 +322,6 @@ export function SettingsPage() {
             </div>
 
             <div className="plan-section">
-              <h3>Módulos incluidos</h3>
-              <ul className="plan-list">
-                {PLAN_MODULE_IDS.map((moduleId) => {
-                  const enabled = isPlanModuleEnabled(plan, moduleId)
-                  const module = APP_MODULES.find((entry) => entry.id === moduleId)
-                  return (
-                    <li key={moduleId} className={enabled ? 'is-on' : 'is-off'}>
-                      {enabled ? <CheckCircle2 size={15} /> : <X size={15} />}
-                      <span>{module?.title ?? moduleId}</span>
-                      <em>{enabled ? 'Habilitado' : 'Bloqueado'}</em>
-                    </li>
-                  )
-                })}
-                <li className="is-on">
-                  <CheckCircle2 size={15} />
-                  <span>Configuración</span>
-                  <em>Siempre disponible</em>
-                </li>
-              </ul>
-            </div>
-
-            <div className="plan-section">
               <h3>Límites del plan</h3>
               <div className="limits">
                 <div className="limit-row">
@@ -375,6 +354,8 @@ export function SettingsPage() {
               </ul>
             </div>
           </section>
+
+          <LicenseSystemPanel />
 
           <EntitlementsPanel unlocked={pinUnlocked} />
 

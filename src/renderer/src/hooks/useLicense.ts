@@ -6,7 +6,8 @@ export function useLicense() {
     loaded: false,
     filePath: null,
     data: null,
-    validUntil: null
+    validUntil: null,
+    error: null
   })
   const [loading, setLoading] = useState(true)
 
@@ -17,6 +18,11 @@ export function useLicense() {
       if (!api?.licenseGet) return
       const res = await api.licenseGet()
       setState(res)
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al cargar licencia'
+      }))
     } finally {
       setLoading(false)
     }
@@ -25,9 +31,15 @@ export function useLicense() {
   const importLicense = useCallback(async () => {
     const api = window.minierp
     if (!api?.licenseImport) throw new Error('API de licencia no disponible')
-    const res = await api.licenseImport()
-    setState(res)
-    return res
+    try {
+      const res = await api.licenseImport()
+      setState(res)
+      return res
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cargar licencia'
+      setState((prev) => ({ ...prev, error: message }))
+      throw error
+    }
   }, [])
 
   useEffect(() => {
@@ -45,13 +57,9 @@ export function useLicense() {
 
   const hasFeature = useCallback(
     (feature: string) => {
-      if (!state.loaded || !state.data) return false
-      if (Array.isArray(state.data.features)) {
-        return state.data.features.includes(feature)
-      }
       return isModuleEnabled(feature)
     },
-    [state, isModuleEnabled]
+    [isModuleEnabled]
   )
 
   return { ...state, loading, refresh, importLicense, isModuleEnabled, hasFeature }

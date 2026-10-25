@@ -1,18 +1,15 @@
 export interface LicenseModules {
-  inventory?: boolean
+  inventory: boolean
+  finances: boolean
   finance?: boolean
   [key: string]: boolean | undefined
 }
 
 export interface LicenseFile {
-  clientName?: string
-  companyName?: string
-  expirationDate?: string
-  issuedAt?: string
-  licenseId?: string
+  clientName: string
+  rif: string
+  expiresAt: string
   modules: LicenseModules
-  features?: string[]
-  signature?: string
 }
 
 export interface LicenseState {
@@ -20,4 +17,5 @@ export interface LicenseState {
   filePath: string | null
   data: LicenseFile | null
   validUntil: string | null
+  error?: string | null
 }

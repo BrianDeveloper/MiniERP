@@ -5,6 +5,7 @@ import { PLAN_LABELS, type PlanConfig } from '../../../shared/types/plan'
 import { Clock } from '../components/Clock'
 import { APP_MODULES, canOpenModule, type AppModule } from '../modules/registry'
 import { useAppData } from './AppDataProvider'
+import { useLicense } from '../hooks/useLicense'
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -64,8 +65,21 @@ function LauncherTile({ module, enabled, onOpen }: LauncherTileProps) {
 export function LauncherPage() {
   const { business, plan, system } = useAppData()
   const navigate = useNavigate()
+  const { isModuleEnabled, loaded } = useLicense()
   const planLabel = PLAN_LABELS[plan.plan]
-  const availableModules = APP_MODULES.filter((module) => canOpenModule(module, plan)).length
+  const availableModules = APP_MODULES.filter((module) => {
+    const planEnabled = canOpenModule(module, plan)
+    if (module.id === 'settings') return true
+    if (module.id === 'inventory') {
+      const lic = loaded ? isModuleEnabled('inventory') : planEnabled
+      return planEnabled && lic
+    }
+    if (module.id === 'finance') {
+      const lic = loaded ? isModuleEnabled('finances') : planEnabled
+      return planEnabled && lic
+    }
+    return planEnabled
+  }).length
 
   return (
     <div className="launcher">
@@ -113,7 +127,7 @@ export function LauncherPage() {
             <LauncherTile
               key={module.id}
               module={module}
-              enabled={canOpenModule(module, plan)}
+              enabled={(() => { const p = canOpenModule(module, plan); if (module.id === 'inventory') return p && (loaded ? isModuleEnabled('inventory') : p); if (module.id === 'finance') return p && (loaded ? isModuleEnabled('finances') : p); if (module.id === 'settings') return true; return p })()}
               onOpen={() => navigate(module.route)}
             />
           ))}
