@@ -1,5 +1,6 @@
 import { financeMigrations } from '../modules/finance/finance.migrations'
 import { inventoryMigrations } from '../modules/inventory/inventory.migrations'
+import { settingsMigrations } from '../modules/settings/settings.migrations'
 import type { Migration } from './migration-runner'
 
-export const appMigrations: Migration[] = [...inventoryMigrations, ...financeMigrations]
+export const appMigrations: Migration[] = [...settingsMigrations, ...inventoryMigrations, ...financeMigrations]

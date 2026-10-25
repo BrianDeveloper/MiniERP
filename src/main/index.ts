@@ -14,6 +14,8 @@ import {
   listBackups,
   restoreBackup
 } from './security/backup-service'
+import { ExchangeRateService } from './services/exchange-rate.service'
+import { DatabaseSync } from 'node:sqlite'
 
 app.setName('MiniERP')
 if (process.platform === 'win32') {
@@ -59,6 +61,15 @@ if (!hasSingleInstanceLock) {
 
       const config = new ConfigService(dataDir, defaultsDir)
       await config.init()
+
+      const dbPath = join(dataDir, 'data', 'minierp.db')
+      const db = new DatabaseSync(dbPath)
+      const exchangeRateService = new ExchangeRateService(db)
+      void exchangeRateService.initialize()
+
+      ipcMain.handle(IPC_CHANNELS.exchangeRateGet, () => exchangeRateService.getState())
+      ipcMain.handle(IPC_CHANNELS.exchangeRateFetchAuto, () => exchangeRateService.fetchAuto())
+      ipcMain.handle(IPC_CHANNELS.exchangeRateUpdateManual, (_event, rate: number) => exchangeRateService.updateManual(Number(rate)))
 
       const token = randomBytes(32).toString('hex')
       api = await startApiServer({

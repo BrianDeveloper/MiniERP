@@ -1,6 +1,6 @@
 {
   "name": "minierp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "productName": "MiniERP",
   "description": "Mini ERP local-first para pequeños comerciantes",
   "main": "./out/main/index.js",
@@ -18,6 +18,8 @@
     "backup": "node scripts/backup-db.mjs"
   },
   "dependencies": {
+    "axios": "^1.20.0",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "electron-updater": "^6.8.9",
     "express": "^5.3.0",

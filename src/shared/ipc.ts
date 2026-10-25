@@ -15,7 +15,10 @@ export const IPC_CHANNELS = {
   backupCreate: 'backup:create',
   backupList: 'backup:list',
   backupRestore: 'backup:restore',
-  backupReveal: 'backup:reveal'
+  backupReveal: 'backup:reveal',
+  exchangeRateGet: 'exchange-rate:get',
+  exchangeRateFetchAuto: 'exchange-rate:fetch-auto',
+  exchangeRateUpdateManual: 'exchange-rate:update-manual'
 } as const
 
 export interface BackupInfo {
@@ -66,4 +69,7 @@ export interface MinierpBridge {
   listBackups(): Promise<{ ok: boolean; error?: string; backups?: BackupInfo[] }>
   restoreBackup(path: string): Promise<{ ok: boolean; error?: string }>
   revealBackups(): Promise<{ ok: boolean; error?: string }>
+  getExchangeRate(): Promise<import('./types/exchange-rate').ExchangeRateState>
+  fetchExchangeRateAuto(): Promise<import('./types/exchange-rate').ExchangeRateState>
+  updateExchangeRateManual(rate: number): Promise<import('./types/exchange-rate').ExchangeRateState>
 }

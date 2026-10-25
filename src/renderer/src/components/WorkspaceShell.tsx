@@ -1,6 +1,7 @@
 import { ArrowLeft, type LucideIcon } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ExchangeRateWidget } from './ExchangeRateWidget'
 
 interface WorkspaceShellProps {
   title: string
@@ -40,7 +41,10 @@ export function WorkspaceShell({
           </div>
         </div>
 
-        {actions ? <div className="workspace-actions">{actions}</div> : null}
+        <div className="workspace-actions">
+          <ExchangeRateWidget />
+          {actions}
+        </div>
       </header>
 
       <main className="workspace-body">{children}</main>
